@@ -1,4 +1,9 @@
-"dependencies": {
-  "@resvg/resvg-js": "^2.6.2",
-  "axios": "^1.6.0"
+{
+  "name": "wma-banner-service",
+  "version": "1.0.0",
+  "main": "api/generate.js",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "axios": "^1.6.0"
+  }
 }
