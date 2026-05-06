@@ -1,34 +1,25 @@
 import fs from 'fs';
 import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
-import axios from 'axios';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  const { l1, l2, bgId } = req.body;
+  // รับรูป bgBase64 ที่ Google Sheet ส่งมาให้แบบพร้อมใช้
+  const { l1, l2, bgBase64 } = req.body;
 
   try {
-    // 1. ดึงภาพ Background จาก Google Drive และแปลงเป็น Base64
-    let bgBase64 = '';
-    if (bgId) {
-      const driveUrl = `https://drive.google.com/uc?id=${bgId}&export=download`;
-      const response = await axios.get(driveUrl, { responseType: 'arraybuffer' });
-      const buffer = Buffer.from(response.data, 'binary');
-      bgBase64 = `data:image/jpeg;base64,${buffer.toString('base64')}`;
-    }
-
-    // 2. อ่านไฟล์ SVG Template จาก GitHub
+    // 1. อ่านไฟล์ SVG Template
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // 3. ยัดข้อความ L1, L2 และ รูปภาพ Base64 ลงไปใน SVG
+    // 2. แปะข้อความ และ แปะรูป ลงไปใน SVG ดื้อๆ เลย
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
       .replace('{{L2}}', l2 || '')
-      .replace('{{BG_BASE64}}', bgBase64);
+      .replace('{{BG_BASE64}}', bgBase64 || '');
 
-    // 4. Render ภาพด้วย Resvg
+    // 3. Render ภาพด้วย Resvg
     const resvg = new Resvg(svgContent, {
       font: {
         fontFiles: [
