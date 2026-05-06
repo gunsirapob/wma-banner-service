@@ -1,25 +1,38 @@
 import fs from 'fs';
 import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
+import axios from 'axios';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  // รับรูป bgBase64 ที่ Google Sheet ส่งมาให้แบบพร้อมใช้
-  const { l1, l2, bgBase64 } = req.body;
+  const { l1, l2, bgId, driveToken } = req.body;
 
   try {
-    // 1. อ่านไฟล์ SVG Template
+    let bgBase64 = '';
+    
+    if (bgId && driveToken) {
+      // 🔑 ใช้กุญแจที่ได้มา ดึงภาพระดับ High-Res จาก Google Drive แบบทะลุเกราะ
+      const driveUrl = `https://www.googleapis.com/drive/v3/files/${bgId}?alt=media`;
+      
+      const response = await axios.get(driveUrl, {
+        headers: { Authorization: `Bearer ${driveToken}` },
+        responseType: 'arraybuffer'
+      });
+      
+      const buffer = Buffer.from(response.data, 'binary');
+      const mimeType = response.headers['content-type'] || 'image/jpeg';
+      bgBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+    }
+
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // 2. แปะข้อความ และ แปะรูป ลงไปใน SVG ดื้อๆ เลย
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
       .replace('{{L2}}', l2 || '')
       .replace('{{BG_BASE64}}', bgBase64 || '');
 
-    // 3. Render ภาพด้วย Resvg
     const resvg = new Resvg(svgContent, {
       font: {
         fontFiles: [
@@ -39,7 +52,7 @@ export default async function handler(req, res) {
     res.status(200).send(pngBuffer);
 
   } catch (error) {
-    console.error("Generate Error:", error);
+    console.error("Generate Error:", error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Failed to generate image', details: error.message });
   }
 }
