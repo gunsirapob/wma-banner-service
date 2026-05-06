@@ -1,7 +1,1 @@
-{
-  "name": "wma-banner",
-  "dependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "axios": "^1.6.0"
-  }
-}
+{"name":"wma-banner","dependencies":{"@resvg/resvg-js":"^2.6.2","axios":"^1.6.0"}}
