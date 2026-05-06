@@ -12,9 +12,7 @@ export default async function handler(req, res) {
     let bgBase64 = '';
     
     if (bgId && driveToken) {
-      // 🔑 ใช้กุญแจที่ได้มา ดึงภาพระดับ High-Res จาก Google Drive แบบทะลุเกราะ
       const driveUrl = `https://www.googleapis.com/drive/v3/files/${bgId}?alt=media`;
-      
       const response = await axios.get(driveUrl, {
         headers: { Authorization: `Bearer ${driveToken}` },
         responseType: 'arraybuffer'
@@ -28,9 +26,13 @@ export default async function handler(req, res) {
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
+    // 🌟 พระเอกอยู่ตรงนี้: สั่งให้แปลงการเคาะบรรทัด (\n) เป็นแท็ก <tspan> ของ SVG
+    // dy="55" คือระยะห่างระหว่างบรรทัด (ถ้าชิดไป ปรับตัวเลขเพิ่มได้ครับ)
+    const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
+
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
-      .replace('{{L2}}', l2 || '')
+      .replace('{{L2}}', formattedL2)
       .replace('{{BG_BASE64}}', bgBase64 || '');
 
     const resvg = new Resvg(svgContent, {
