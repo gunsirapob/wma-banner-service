@@ -9,37 +9,66 @@ export default async function handler(req, res) {
   const { l1, l2, bgId, driveToken } = req.body;
 
   try {
+    // ---- โหลด font เป็น base64 ----
+    const fontBd = fs.readFileSync(
+      path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')
+    ).toString('base64');
+
+    const fontXBd = fs.readFileSync(
+      path.join(process.cwd(), 'LINESeedSansTH_XBd.ttf')
+    ).toString('base64');
+
+    // ---- โหลด background จาก Google Drive ----
     let bgBase64 = '';
-    
+
     if (bgId && driveToken) {
       const driveUrl = `https://www.googleapis.com/drive/v3/files/${bgId}?alt=media`;
       const response = await axios.get(driveUrl, {
         headers: { Authorization: `Bearer ${driveToken}` },
         responseType: 'arraybuffer'
       });
-      
+
       const buffer = Buffer.from(response.data, 'binary');
       const mimeType = response.headers['content-type'] || 'image/jpeg';
       bgBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
     }
 
+    // ---- โหลด SVG template ----
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // ระบบตัดบรรทัด (ยังเก็บไว้อยู่ครับ ใช้งานได้ปกติ)
+    // ---- ยัด font เข้าไปใน <defs> ของ SVG ----
+    svgContent = svgContent.replace(
+      '<defs>',
+      `<defs>
+    <style>
+      @font-face {
+        font-family: 'LINE Seed Sans TH';
+        font-weight: 700;
+        src: url('data:font/ttf;base64,${fontBd}') format('truetype');
+      }
+      @font-face {
+        font-family: 'LINE Seed Sans TH';
+        font-weight: 800;
+        src: url('data:font/ttf;base64,${fontXBd}') format('truetype');
+      }
+    </style>`
+    );
+
+    // ---- แทนที่ข้อความใน template ----
     const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
 
-    // ส่งข้อความ l1, l2 เข้าไปตรงๆ เลย ไม่ต้องผ่านตัวกรองแล้ว
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
       .replace('{{L2}}', formattedL2)
       .replace('{{BG_BASE64}}', bgBase64 || '');
 
+    // ---- แปลง SVG → PNG ----
     const resvg = new Resvg(svgContent, {
       font: {
         fontFiles: [
-          path.join(process.cwd(), 'LINESeedSansTH_XBd.ttf'),
-          path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')
+          path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf'),
+          path.join(process.cwd(), 'LINESeedSansTH_XBd.ttf')
         ],
         loadSystemFonts: false,
         defaultFontFamily: 'LINE Seed Sans TH',
@@ -58,6 +87,3 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to generate image', details: error.message });
   }
 }
-const fontBd = fs.readFileSync(
-  path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')
-).toString('base64');
