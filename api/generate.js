@@ -8,6 +8,10 @@ export default async function handler(req, res) {
 
   const { l1, l2, bgId, driveToken } = req.body;
 
+  // ---- Normalize Unicode ป้องกันสระซ้อน ----
+  const cleanL1 = (l1 || '').normalize('NFC');
+  const cleanL2 = (l2 || '').normalize('NFC');
+
   try {
     // ---- โหลด font เป็น base64 ----
     const fontBd = fs.readFileSync(
@@ -56,10 +60,10 @@ export default async function handler(req, res) {
     );
 
     // ---- แทนที่ข้อความใน template ----
-    const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
+    const formattedL2 = cleanL2.replace(/\n/g, '</tspan><tspan x="0" dy="55">');
 
     svgContent = svgContent
-      .replace('{{L1}}', l1 || '')
+      .replace('{{L1}}', cleanL1)
       .replace('{{L2}}', formattedL2)
       .replace('{{BG_BASE64}}', bgBase64 || '');
 
