@@ -58,3 +58,6 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to generate image', details: error.message });
   }
 }
+const fontBd = fs.readFileSync(
+  path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')
+).toString('base64');
