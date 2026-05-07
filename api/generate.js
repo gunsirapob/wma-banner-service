@@ -3,24 +3,10 @@ import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
 
-// 🛠 ท่าไม้ตายจัดการ "สระอำ" ให้เรียงตัวสวยงาม
-const fixThaiVowels = (text) => {
-  if (!text) return '';
-  // 1. กรณีมีวรรณยุกต์นำหน้าสระอำ (เช่น น้ำ, ซ้ำ) -> แยกชิ้นส่วนและสลับตำแหน่งให้ถูกต้อง
-  let fixedText = text.replace(/([่-๋])ำ/g, 'ํ$1า');
-  // 2. กรณีสระอำเดี่ยวๆ (เช่น ทำ, ดำ) -> เปลี่ยนเป็น วงกลม + สระอา
-  fixedText = fixedText.replace(/ำ/g, 'ํา');
-  return fixedText;
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  let { l1, l2, bgId, driveToken } = req.body;
-
-  // จับข้อความมาเข้าเครื่องสแกนแก้สระอำก่อนนำไปใช้งาน
-  l1 = fixThaiVowels(l1);
-  l2 = fixThaiVowels(l2);
+  const { l1, l2, bgId, driveToken } = req.body;
 
   try {
     let bgBase64 = '';
@@ -40,9 +26,10 @@ export default async function handler(req, res) {
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // ระบบตัดบรรทัด
+    // ระบบตัดบรรทัด (ยังเก็บไว้อยู่ครับ ใช้งานได้ปกติ)
     const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
 
+    // ส่งข้อความ l1, l2 เข้าไปตรงๆ เลย ไม่ต้องผ่านตัวกรองแล้ว
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
       .replace('{{L2}}', formattedL2)
