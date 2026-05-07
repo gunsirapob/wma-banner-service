@@ -3,21 +3,17 @@ import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
 
-// 🛠 ฟังก์ชันเปลี่ยน สระอำ เป็น นิคหิต + สระอา (ใช้ Unicode เพื่อป้องกันโค้ดเพี้ยน)
+// 🛠 ฟังก์ชันแก้สระอำแบบใหม่ (ใช้กำแพงล่องหน \u200B ป้องกันการซ้อนทับ)
 const fixThaiVowels = (text) => {
   if (!text) return '';
   // \u0E48-\u0E4B คือ ไม้เอก ถึง ไม้จัตวา
   // \u0E33 คือ สระอำ
   // \u0E4D คือ นิคหิต (วงกลมด้านบน)
+  // \u200B คือ Zero-Width Space (กำแพงล่องหน ช่วยดันสระอาให้มีระยะห่าง)
   // \u0E32 คือ สระอา
   
-  // 1. ถ้ามี วรรณยุกต์ + สระอำ (เช่น น้ำ) -> ให้สลับเป็น นิคหิต + วรรณยุกต์ + สระอา
-  let result = text.replace(/([\u0E48-\u0E4B])\u0E33/g, '\u0E4D$1\u0E32');
-  
-  // 2. ถ้าเป็น สระอำ เดี่ยวๆ (เช่น ทำ) -> ให้เปลี่ยนเป็น นิคหิต + สระอา
-  result = result.replace(/\u0E33/g, '\u0E4D\u0E32');
-  
-  return result;
+  // แปลงเฉพาะ วรรณยุกต์+สระอำ (เช่น น้ำ) -> นิคหิต + วรรณยุกต์ + กำแพงล่องหน + สระอา
+  return text.replace(/([\u0E48-\u0E4B])\u0E33/g, '\u0E4D$1\u200B\u0E32');
 };
 
 export default async function handler(req, res) {
@@ -25,7 +21,7 @@ export default async function handler(req, res) {
 
   let { l1, l2, bgId, driveToken } = req.body;
 
-  // เอาข้อความมาผ่านตัวกรอง Unicode ก่อน
+  // เอาข้อความมาผ่านตัวกรองก่อน
   l1 = fixThaiVowels(l1);
   l2 = fixThaiVowels(l2);
 
