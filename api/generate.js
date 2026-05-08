@@ -3,12 +3,12 @@ import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
 
-// 🛠 ฟังก์ชันแอบเติมเว้นวรรคหลัง "ำ" ตามที่คุณแนะนำเป๊ะๆ
+// 🛠 บังคับเว้นวรรค 1 เคาะ ด้วย Non-breaking space (\u00A0)
 const fixThaiSpacing = (text) => {
   if (!text) return '';
   
-  // หาตัว "ำ" แล้วเติมเว้นวรรคให้ 1 เคาะ (แต่ถ้ามีเว้นวรรคอยู่แล้ว จะไม่เติมซ้ำครับ)
-  return text.replace(/ำ(?!\s)/g, 'ำ ');
+  // แทนที่ "ำ" ทุกตัว ด้วย "ำ" + "ช่องว่างบังคับเว้น (\u00A0)"
+  return text.replace(/ำ/g, 'ำ\u00A0');
 };
 
 export default async function handler(req, res) {
