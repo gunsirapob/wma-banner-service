@@ -3,11 +3,10 @@ import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
 
-// 🛠 บังคับเว้นวรรคหลังสระอำให้ "กว้างสุดๆ" ด้วย Em Space (\u2003)
+// 🛠 บังคับเว้นวรรคด้วย Non-breaking space 2 เคาะติดกัน (\u00A0\u00A0)
 const fixThaiSpacing = (text) => {
   if (!text) return '';
-  // ใช้ \u2003 เพื่อถ่างระยะห่างออกเท่ากับ 1 ตัวอักษรเต็มๆ
-  return text.replace(/ำ/g, 'ำ\u2003');
+  return text.replace(/ำ/g, 'ำ\u00A0\u00A0');
 };
 
 export default async function handler(req, res) {
@@ -15,7 +14,6 @@ export default async function handler(req, res) {
 
   let { l1, l2, bgId, driveToken } = req.body;
 
-  // นำข้อความมาจัดการระยะห่างก่อนส่งไปวาดรูป
   l1 = fixThaiSpacing(l1);
   l2 = fixThaiSpacing(l2);
 
@@ -37,7 +35,6 @@ export default async function handler(req, res) {
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // ระบบตัดบรรทัดสำหรับ L2
     const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
 
     svgContent = svgContent
