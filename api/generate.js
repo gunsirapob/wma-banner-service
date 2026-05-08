@@ -3,11 +3,9 @@ import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
 
-// 🛠 บังคับเว้นวรรค 1 เคาะ ด้วย Non-breaking space (\u00A0)
+// 🛠 ฟังก์ชันแอบเติมเว้นวรรค (Non-breaking space) หลังสระอำ
 const fixThaiSpacing = (text) => {
   if (!text) return '';
-  
-  // แทนที่ "ำ" ทุกตัว ด้วย "ำ" + "ช่องว่างบังคับเว้น (\u00A0)"
   return text.replace(/ำ/g, 'ำ\u00A0');
 };
 
