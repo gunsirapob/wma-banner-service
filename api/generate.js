@@ -2,64 +2,89 @@ import fs from 'fs';
 import path from 'path';
 import { Resvg } from '@resvg/resvg-js';
 import axios from 'axios';
-
-// 🛠 ฟังก์ชันแก้สระอำแบบใหม่ (ใช้กำแพงล่องหน \u200B ป้องกันการซ้อนทับ)
-const fixThaiVowels = (text) => {
-  if (!text) return '';
-  // \u0E48-\u0E4B คือ ไม้เอก ถึง ไม้จัตวา
-  // \u0E33 คือ สระอำ
-  // \u0E4D คือ นิคหิต (วงกลมด้านบน)
-  // \u200B คือ Zero-Width Space (กำแพงล่องหน ช่วยดันสระอาให้มีระยะห่าง)
-  // \u0E32 คือ สระอา
-  
-  // แปลงเฉพาะ วรรณยุกต์+สระอำ (เช่น น้ำ) -> นิคหิต + วรรณยุกต์ + กำแพงล่องหน + สระอา
-  return text.replace(/([\u0E48-\u0E4B])\u0E33/g, '\u0E4D$1\u200B\u0E32');
-};
+import satori from 'satori';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
-  let { l1, l2, bgId, driveToken } = req.body;
-
-  // เอาข้อความมาผ่านตัวกรองก่อน
-  l1 = fixThaiVowels(l1);
-  l2 = fixThaiVowels(l2);
+  const { l1, l2, bgId, driveToken } = req.body;
 
   try {
     let bgBase64 = '';
-    
     if (bgId && driveToken) {
       const driveUrl = `https://www.googleapis.com/drive/v3/files/${bgId}?alt=media`;
       const response = await axios.get(driveUrl, {
         headers: { Authorization: `Bearer ${driveToken}` },
         responseType: 'arraybuffer'
       });
-      
       const buffer = Buffer.from(response.data, 'binary');
       const mimeType = response.headers['content-type'] || 'image/jpeg';
       bgBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
     }
 
+    // 🌟 1. ให้ Satori แปลงข้อความ L1, L2 เป็นกราฟิก SVG ที่จัดสระภาษาไทยแบบเป๊ะๆ 100%
+    const textElements = {
+      type: 'div',
+      props: {
+        style: { display: 'flex', width: 1080, height: 1080, position: 'relative' },
+        children: [
+          {
+            type: 'div',
+            props: {
+              // ตำแหน่งของ L1 (ถ้าสูง/ต่ำไป ปรับที่เลข top: 780 ได้ครับ)
+              style: { position: 'absolute', top: 780, left: 75, fontFamily: 'LINE Seed', fontWeight: 800, fontSize: 95, color: 'white', display: 'flex' },
+              children: l1 || ''
+            }
+          },
+          {
+            type: 'div',
+            props: {
+              // ตำแหน่งของ L2 (ถ้าสูง/ต่ำไป ปรับที่เลข top: 910 ได้ครับ)
+              style: { position: 'absolute', top: 910, left: 75, fontFamily: 'LINE Seed', fontWeight: 700, fontSize: 41, color: 'white', display: 'flex', flexDirection: 'column', lineHeight: 1.2 },
+              children: (l2 || '').split('\n').map(line => ({
+                type: 'div',
+                props: { children: line }
+              }))
+            }
+          }
+        ]
+      }
+    };
+
+    const textSvgOverlay = await satori(textElements, {
+      width: 1080,
+      height: 1080,
+      fonts: [
+        {
+          name: 'LINE Seed',
+          data: fs.readFileSync(path.join(process.cwd(), 'LINESeedSansTH_XBd.ttf')),
+          weight: 800,
+          style: 'normal',
+        },
+        {
+          name: 'LINE Seed',
+          data: fs.readFileSync(path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')),
+          weight: 700,
+          style: 'normal',
+        }
+      ]
+    });
+
+    // 🌟 2. อ่านไฟล์เทมเพลตเดิม แล้วประกอบร่าง!
     const templatePath = path.join(process.cwd(), 'Cover_temp.svg');
     let svgContent = fs.readFileSync(templatePath, 'utf8');
 
-    // ระบบตัดบรรทัด L2
-    const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
+    // ใส่รูปปลาเผา/รูปพื้นหลัง
+    svgContent = svgContent.replace('{{BG_BASE64}}', bgBase64 || '');
+    
+    // **ซ่อนข้อความระบบเก่าที่สระเพี้ยนทิ้งไปเลย**
+    svgContent = svgContent.replace('{{L1}}', '').replace('{{L2}}', '');
+    
+    // **แปะข้อความจาก Satori (ที่สระสมบูรณ์แล้ว) ลงไปชั้นบนสุด!**
+    svgContent = svgContent.replace('</svg>', `${textSvgOverlay}</svg>`);
 
-    svgContent = svgContent
-      .replace('{{L1}}', l1 || '')
-      .replace('{{L2}}', formattedL2)
-      .replace('{{BG_BASE64}}', bgBase64 || '');
-
+    // 🌟 3. วาดรูปขั้นตอนสุดท้าย
     const resvg = new Resvg(svgContent, {
-      font: {
-        fontFiles: [
-          path.join(process.cwd(), 'LINESeedSansTH_XBd.ttf'),
-          path.join(process.cwd(), 'LINESeedSansTH_Bd.ttf')
-        ],
-        loadSystemFonts: false,
-        defaultFontFamily: 'LINE Seed Sans TH',
-      },
       fitTo: { mode: 'width', value: 1080 }
     });
 
