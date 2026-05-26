@@ -30,16 +30,24 @@ export default async function handler(req, res) {
       bgBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
     }
 
-    // ✅ ดึง SVG ล่าสุดจาก GitHub ทุกครั้ง
+    // ดึง SVG ล่าสุดจาก GitHub ทุกครั้ง
     const svgRes = await axios.get(SVG_URL);
     let svgContent = svgRes.data;
 
     // แทนค่า template
     const formattedL2 = (l2 || '').replace(/\n/g, '</tspan><tspan x="0" dy="55">');
+
+    if (bgBase64) {
+      // replaceAll เพราะ SVG มี {{BG_BASE64}} ทั้ง href และ xlink:href
+      svgContent = svgContent.replaceAll('{{BG_BASE64}}', bgBase64);
+    } else {
+      // ไม่มีรูป — ลบ <image> tag ออก เหลือแค่ rect สีขาว
+      svgContent = svgContent.replace(/<image[^/]*\/>/g, '');
+    }
+
     svgContent = svgContent
       .replace('{{L1}}', l1 || '')
-      .replace('{{L2}}', formattedL2)
-      .replace('{{BG_BASE64}}', bgBase64 || '');
+      .replace('{{L2}}', formattedL2);
 
     // Render PNG
     const resvg = new Resvg(svgContent, {
