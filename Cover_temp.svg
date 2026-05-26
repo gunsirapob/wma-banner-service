@@ -8,13 +8,14 @@
     </linearGradient>
   </defs>
   <g id="photo">
-    <rect x="-14.94" y="-18.9" width="1110.37" height="1110.37" fill="none"/>
+    <rect x="-14.94" y="-18.9" width="1110.37" height="1110.37" fill="#fff"/>
+    <image href="{{BG_BASE64}}" xlink:href="{{BG_BASE64}}" x="-14.94" y="-18.9" width="1110.37" height="1110.37" preserveAspectRatio="xMidYMid slice"/>
   </g>
   <g id="overlay">
     <rect x="-14.94" y="581.26" width="1110.37" height="498.74" fill="url(#linear-gradient)"/>
   </g>
   <g id="L2">
-    <text transform="translate(75.87 970.63)" fill="#fff" font-family="LINESeedSansTH-Bold, &apos;LINE Seed Sans TH&apos;" font-size="41.66" font-weight="700"><tspan x="0" y="0">{{L2}}</tspan></text>
+    <text transform="translate(75.87 980.63)" fill="#fff" font-family="LINESeedSansTH-Bold, &apos;LINE Seed Sans TH&apos;" font-size="41.66" font-weight="700"><tspan x="0" y="0">{{L2}}</tspan></text>
   </g>
   <g id="L1">
     <text transform="translate(75.87 890.84)" fill="#fff" font-family="LINESeedSansTH-ExtraBold, &apos;LINE Seed Sans TH&apos;" font-size="95.74" font-weight="700"><tspan x="0" y="0">{{L1}}</tspan></text>
