@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1080 1080">
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 1080 1080">
   <!-- Generator: Adobe Illustrator 30.4.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 226)  -->
   <g id="photo">
     <rect x="-14.94" y="-18.9" width="1110.37" height="1110.37" fill="#fff"/>
+    <image href="{{BG_BASE64}}" xlink:href="{{BG_BASE64}}" x="-14.94" y="-18.9" width="1110.37" height="1110.37" preserveAspectRatio="xMidYMid slice"/>
   </g>
   <g id="LOGO_x5F_WN">
     <g>
